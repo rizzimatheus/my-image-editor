@@ -10,7 +10,7 @@ eframe = "0.19.0"
 #eframe = { path = "/home/rizzi/Downloads/egui-master/crates/eframe" }
 
 #egui_extras = "0.19.0"
-egui_extras = { version = "0.19.0", features = ["image"] }
+egui_extras = { version = "0.19.0", features = ["image", "svg"] }
 #egui_extras = { path = "/home/rizzi/Downloads/egui-master/crates/egui_extras", features = ["image"] }
 
 tempfile = "3.3.0"
