@@ -47,7 +47,7 @@ impl ImageEditor {
             versions_discart: VecDeque::new(),
             logo: RetainedImage::from_image_bytes(
                 "logo.png",
-                include_bytes!("../logo.png"),
+                include_bytes!("../imgs/logo.png"),
             ).unwrap(),
             state: State::Waiting,
             intensity: 0.0,

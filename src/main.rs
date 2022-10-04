@@ -14,7 +14,7 @@ const INITIAL_WINDOW_H: f32 = 52.0 * 9.0;
 fn main() {
     let app = image_editor::ImageEditor::new();
     let win_options = NativeOptions {
-        icon_data: Some(load_icon("./icon.png")),
+        icon_data: Some(load_icon("./imgs/icon.png")),
         initial_window_size: Some(vec2(INITIAL_WINDOW_W, INITIAL_WINDOW_H)),
         min_window_size: Some(vec2(0.6*INITIAL_WINDOW_W, 0.6*INITIAL_WINDOW_H)),
         ..Default::default()
