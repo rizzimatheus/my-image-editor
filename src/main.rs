@@ -1,11 +1,10 @@
 mod image_editor;
-use std::fs;
 use eframe::{App, egui, Frame, NativeOptions, run_native};
 use eframe::egui::{CentralPanel, Context, vec2};
-use egui_extras::RetainedImage;
 use crate::egui::{Align, FontId, Layout, SidePanel, TopBottomPanel};
 use crate::egui::FontFamily::{Proportional};
 use crate::egui::TextStyle::{Body, Button, Monospace};
+use crate::image_editor::State;
 
 const PADDIN: f32 = 5.0;
 const SIDE_PANEL_SIZE: f32 = 150.0;
@@ -15,7 +14,7 @@ const INITIAL_WINDOW_H: f32 = 52.0 * 9.0;
 fn main() {
     let app = image_editor::ImageEditor::new();
     let win_options = NativeOptions {
-        icon_data: Some(load_icon("./rust_logo.png")),
+        icon_data: Some(load_icon("./icon.png")),
         initial_window_size: Some(vec2(INITIAL_WINDOW_W, INITIAL_WINDOW_H)),
         min_window_size: Some(vec2(0.6*INITIAL_WINDOW_W, 0.6*INITIAL_WINDOW_H)),
         ..Default::default()
@@ -35,12 +34,13 @@ impl App for image_editor::ImageEditor {
             .default_width(SIDE_PANEL_SIZE)
             // .width_range(80.0..=400.0)
             .show(ctx, |ui| {
-                ui.add_space(PADDIN);
+                ui.add_space(2.0*PADDIN);
                 ui.vertical_centered(|ui| {
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         ui.add_sized([SIDE_PANEL_SIZE, 25.], egui::Image::new(self.logo().texture_id(ctx), vec2(50.,50.)));
 
-                        ui.label(format!("Image Verison = {}", self.version_number()));
+                        ui.add_space(2.0*PADDIN);
+                        ui.separator();
 
                         // Get current context style
                         let mut style = (*ctx.style()).clone();
@@ -50,71 +50,62 @@ impl App for image_editor::ImageEditor {
                         ].into();
                         ui.style_mut().text_styles = style.text_styles;
 
-                        ui.add_space(PADDIN);
+                        ui.add_space(2.0*PADDIN);
                         // Blur
-                        let blur_buttom = ui.add_sized([120., 40.], egui::Button::new("Blur"));
-                        if blur_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.blur());
+                        let blur_button = ui.add_sized([120., 40.], egui::Button::new("Blur"));
+                        if blur_button.clicked() && self.current_img_path().is_some() && *self.state() != State::Blur {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Blur);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
+                        ui.add_space(2.0*PADDIN);
                         // Brighten
-                        let brighten_buttom = ui.add_sized([120., 40.], egui::Button::new("Brighten"));
-                        if brighten_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.brighten());
+                        let brighten_button = ui.add_sized([120., 40.], egui::Button::new("Brighten"));
+                        if brighten_button.clicked() && self.current_img_path().is_some() {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Brighten);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
+                        ui.add_space(2.0*PADDIN);
                         // Contrast
-                        let contrast_buttom = ui.add_sized([120., 40.], egui::Button::new("Contrast"));
-                        if contrast_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.contrast());
+                        let contrast_button = ui.add_sized([120., 40.], egui::Button::new("Contrast"));
+                        if contrast_button.clicked() && self.current_img_path().is_some() {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Contrast);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
-                        // Flip_horizontal
-                        let flip_horizontal_buttom = ui.add_sized([120., 40.], egui::Button::new("Flip Horizontal"));
-                        if flip_horizontal_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.flip_horizontal());
+                        ui.add_space(2.0*PADDIN);
+                        // Flip
+                        let flip_button = ui.add_sized([120., 40.], egui::Button::new("Flip Image"));
+                        if flip_button.clicked() && self.current_img_path().is_some() {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Flip);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
-                        // Flip_vertical
-                        let flip_vertical_buttom = ui.add_sized([120., 40.], egui::Button::new("Flip Vertical"));
-                        if flip_vertical_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.flip_vertical());
-                        }
-                        ui.add_space(PADDIN);
+                        ui.add_space(2.0*PADDIN);
                         // Grayscale
-                        let grayscale_buttom = ui.add_sized([120., 40.], egui::Button::new("Grayscale"));
-                        if grayscale_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.grayscale());
+                        let grayscale_button = ui.add_sized([120., 40.], egui::Button::new("Grayscale"));
+                        if grayscale_button.clicked() && self.current_img_path().is_some() {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Grayscale);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
+                        ui.add_space(2.0*PADDIN);
                         // Invert
-                        let invert_buttom = ui.add_sized([120., 40.], egui::Button::new("Invert"));
-                        if invert_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.invert());
+                        let invert_button = ui.add_sized([120., 40.], egui::Button::new("Invert"));
+                        if invert_button.clicked() && self.current_img_path().is_some() {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Invert);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
-                        // Rotate90
-                        let rotate90_buttom = ui.add_sized([120., 40.], egui::Button::new("Rotate 90°"));
-                        if rotate90_buttom.clicked() && self.current_img_path().is_some() {
-                            self.prepare_new_edition();
-                            self.set_current_img_path(self.rotate90());
+                        ui.add_space(2.0*PADDIN);
+                        // Rotate
+                        let rotate_button = ui.add_sized([120., 40.], egui::Button::new("Rotate"));
+                        if rotate_button.clicked() && self.current_img_path().is_some() {
+                            self.set_current_img_edited_path(self.current_img_path().clone());
+                            self.set_state(State::Rotate);
+                            self.clear_effects_values();
                         }
-                        ui.add_space(PADDIN);
-
-                        // Teste
-                        // #[derive(PartialEq)]
-                        // enum State { Waiting, Blur, Brighten, Contrast, FlipH, FlipV, Grayscale, Invert, Rotate90 }
-                        // let mut my_state = State::Waiting;
-
-                        ui.add_space(PADDIN);
-
                     });
                 });
             });
@@ -141,37 +132,31 @@ impl App for image_editor::ImageEditor {
                     ui.style_mut().text_styles = style.text_styles;
 
                     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                        // Select image button
                         ui.label("Select a image:");
                         let open_file_button = ui.add_sized([60., 20.], egui::Button::new("Open file..."));
                         if open_file_button.clicked() {
                             if let Some(path) = rfd::FileDialog::new()
                                 .add_filter("image", &["png", "jpg", "jpeg"])
                                 .pick_file() {
+                                    self.set_initial_image_path(Some(path.clone()));
                                     self.set_current_img_path(Some(path.clone()));
-                                    self.set_image_name(Some(String::from(path.file_name().unwrap().to_str().unwrap())));
+                                    self.set_current_img_edited_path(Some(path));
                                     self.reset_version_number();
                             }
                         }
-
-                        if let Some(picked_path) = &self.current_img_path() {
-                            let file_name = picked_path.file_name().unwrap().to_str().unwrap();
-                            ui.monospace(file_name);
-
-                            let img = fs::read(picked_path).expect("ERROR READING PICKED IMAGE!");
-                            self.set_current_img(Some(RetainedImage::from_image_bytes(
-                                file_name,
-                                &img,
-                            ).expect("ERROR UPDATING IMAGE FROM PICKED PATH!")));
+                        if self.initial_image_path().is_some() {
+                            ui.monospace(self.initial_image_name().unwrap());
                         }
-
                     });
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        // Save image button
                         let save_button = ui.add_sized([60., 20.], egui::Button::new("Save"));
                         if save_button.clicked() && self.current_img_path().is_some() {
                             if let Some(path) = rfd::FileDialog::new()
                                 .add_filter("image", &["png", "jpg", "jpeg"])
-                                .set_file_name(&*self.image_name().as_ref().unwrap())
+                                .set_file_name(&*self.initial_image_name().as_ref().unwrap())
                                 .save_file() {
                                 let img = image::open(self.current_img_path().as_ref().unwrap()).expect("Failed to open INFILE.");
                                 img.save(path).expect("Failed writing OUTFILE.");
@@ -204,10 +189,100 @@ impl App for image_editor::ImageEditor {
 
         TopBottomPanel::bottom("bottom_panel")
             .resizable(false)
-            .min_height(50.0)
+            .min_height(40.0)
             .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading("Bottom Panel");
+                ui.horizontal_centered(|ui| {
+
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                        if self.current_img_path().is_some() {
+                            ui.add_space(2.0*PADDIN);
+                            match self.state() {
+                                State::Blur => {
+                                    let mut scalar = self.intensity();
+                                    ui.add(egui::Slider::new(&mut scalar, 0.0..=20.0));
+                                    if self.intensity() != scalar {
+                                        self.set_intensity(scalar);
+                                        self.set_current_img_edited_path(self.apply_blur());
+                                    }
+                                },
+                                State::Contrast => {
+                                    let mut scalar = self.intensity();
+                                    ui.add(egui::Slider::new(&mut scalar, -20.0..=20.0));
+                                    if self.intensity() != scalar {
+                                        self.set_intensity(scalar);
+                                        self.set_current_img_edited_path(self.apply_contrast());
+                                    }
+                                },
+                                State::Brighten => {
+                                    let mut scalar = self.intensity() as i32;
+                                    ui.add(egui::Slider::new(&mut scalar, -100..=100));
+                                    if self.intensity() != (scalar as f32) {
+                                        self.set_intensity(scalar as f32);
+                                        self.set_current_img_edited_path(self.apply_brighten());
+                                    }
+                                },
+                                State::Invert => {
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Invert Image"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_invert());
+                                    }
+                                },
+                                State::Grayscale => {
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Convert to Grayscale"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_grayscale());
+                                    }
+                                },
+                                State::Flip => {
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Flip Horizontally"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_flip_horizontal());
+                                    }
+                                    ui.add_space(PADDIN);
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Flip Vertically"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_flip_vertical());
+                                    }
+                                    ui.add_space(PADDIN);
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Flip Horizontally + Vertically"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_flip_horizontal_vertical());
+                                    }
+                                },
+                                State::Rotate => {
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Rotate Image 90°"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_rotate90());
+                                    }
+                                    ui.add_space(PADDIN);
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Rotate Image 180°"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_rotate180());
+                                    }
+                                    ui.add_space(PADDIN);
+                                    let apply_effect_button = ui.add_sized([40., 20.], egui::Button::new("Rotate Image 270°"));
+                                    if apply_effect_button.clicked() {
+                                        self.set_current_img_edited_path(self.apply_rotate270());
+                                    }
+                                },
+                                State::Waiting => {},
+                            }
+                        }
+                    });
+
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        if *self.state() != State::Waiting {
+                            ui.add_space(2.0 * PADDIN);
+                            let confirm_button = ui.add_sized([20., 20.], egui::Button::new("Apply Changes"));
+
+                            if confirm_button.clicked() {
+                                self.prepare_new_edition();
+                                self.set_state(State::Waiting);
+                                self.set_current_img_path(self.current_img_edited_path().clone());
+                                self.clear_effects_values();
+                            }
+                        }
+                    });
                 });
             });
 
@@ -215,7 +290,12 @@ impl App for image_editor::ImageEditor {
 
         CentralPanel::default().show(ctx, |ui| {
             // Display Image
-            if let Some(img) = &self.current_img() {
+            let image_to_display = match *self.state() {
+                State::Waiting => self.current_img(),
+                _ => self.current_img_edited(),
+            };
+
+            if let Some(img) = image_to_display {
                 let max_size = ui.available_size();
                 img.show_max_size(ui, max_size);
             }
