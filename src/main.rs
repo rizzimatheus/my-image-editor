@@ -143,6 +143,8 @@ impl App for image_editor::ImageEditor {
                                     self.set_current_img_path(Some(path.clone()));
                                     self.set_current_img_edited_path(Some(path));
                                     self.reset_version_number();
+                                    self.set_state(State::Waiting);
+                                    self.clear_effects_values();
                             }
                         }
                         if self.initial_image_path().is_some() {

@@ -36,7 +36,7 @@ pub struct ImageEditor {
 impl ImageEditor {
     pub fn new() -> Self {
         Self {
-            temp_dir: tempdir().expect("Não foi possível criar diretório temporário"),
+            temp_dir: tempdir().expect("Could not create temporary directory"),
             initial_image_path: None,
             current_img: None,
             current_img_path: None,
@@ -65,9 +65,6 @@ impl ImageEditor {
     }
     pub fn versions_discart(&self) -> &VecDeque<Option<PathBuf>> {
         &self.versions_discart
-    }
-    pub fn version_number(&self) -> usize {
-        self.version_number
     }
 
     pub fn set_current_img(&mut self, current_img: Option<RetainedImage>) {
@@ -123,17 +120,17 @@ impl ImageEditor {
         Some(String::from(self.initial_image_path.as_ref().unwrap().file_name().unwrap().to_str().unwrap()))
     }
     pub fn prepare_new_edition(&mut self) {
-        // VERIFICAR SE CHEGOU NO MÁXIMO DE VERSÕES
+        // Check if have arrived in the maximum of versions
         if self.versions().len() > MAX_VERSIONS {
             self.pop_front_versions();
         }
-        // Se tiver alguma versão na pilha de descarte, remove
+        // If have any versions in the discard stack, remove
         if !self.versions_discart().is_empty() {
             self.clear_versions_discart();
         }
-        // Adiciona na pilha de versões a versão atual
+        // Add the current version to the version stack
         self.push_back_versions(self.current_img_path().clone());
-        // Incrementa o número da versão
+        // Increment the version number
         self.inc_version_number();
     }
 
@@ -150,7 +147,6 @@ impl ImageEditor {
 
         // Save new image on a temp dir
         let file_path = self.get_outfile_pathname();
-        println!("FILE_PATH = {:?}", file_path);
         new_img.save(&file_path).expect("Failed writing OUTFILE.");
 
         // Return new image path
